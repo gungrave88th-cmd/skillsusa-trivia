@@ -80,7 +80,7 @@
             const GITHUB_REPO = 'skillsusa-trivia';       // Replace with your repo name
             const GITHUB_BRANCH = 'main';                 // Usually 'main' or 'master'
             
-            const QUESTIONS_URL = `https://raw.githubusercontent.com/${GITHUB_USER}/${GITHUB_REPO}/${GITHUB_BRANCH}/questions.json`;
+            const QUESTIONS_URL = `https://raw.githubusercontent.com/${gungrave88th-cmd}/${GITHUB_REPO}/${GITHUB_BRANCH}/questions.json`;
 
             // Load questions on mount
             useEffect(() => {
@@ -90,7 +90,6 @@
             const loadQuestions = async () => {
                 try {
                     setIsLoadingQuestions(true);
-                    YOUR-GITHUB-gungrave88th-cmd
                     const response = await fetch(QUESTIONS_URL);
                     if (!response.ok) throw new Error('Failed to load questions');
                     
