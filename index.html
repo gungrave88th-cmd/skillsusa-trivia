@@ -62,43 +62,6 @@
             </svg>
         );
 
-        // Simple localStorage-based storage implementation for standalone version
-        const storage = {
-            get: (key) => {
-                try {
-                    const item = localStorage.getItem(key);
-                    return item ? { key, value: item } : null;
-                } catch (error) {
-                    console.error('Storage get error:', error);
-                    return null;
-                }
-            },
-            set: (key, value) => {
-                try {
-                    localStorage.setItem(key, value);
-                    return { key, value };
-                } catch (error) {
-                    console.error('Storage set error:', error);
-                    return null;
-                }
-            },
-            list: (prefix) => {
-                try {
-                    const keys = [];
-                    for (let i = 0; i < localStorage.length; i++) {
-                        const key = localStorage.key(i);
-                        if (key.startsWith(prefix)) {
-                            keys.push(key);
-                        }
-                    }
-                    return { keys };
-                } catch (error) {
-                    console.error('Storage list error:', error);
-                    return { keys: [] };
-                }
-            }
-        };
-
         function SkillsUSATrivia() {
             const [currentQuestion, setCurrentQuestion] = useState(0);
             const [score, setScore] = useState(0);
@@ -111,383 +74,89 @@
             const [showNameInput, setShowNameInput] = useState(false);
             const [leaderboardData, setLeaderboardData] = useState([]);
             const [isLoadingLeaderboard, setIsLoadingLeaderboard] = useState(false);
+            const [allQuestions, setAllQuestions] = useState([]);
+            const [triviaQuestions, setTriviaQuestions] = useState([]);
+            const [isLoadingQuestions, setIsLoadingQuestions] = useState(true);
+            const [loadError, setLoadError] = useState(null);
 
-            const allQuestions = [
-                // 17 Essential Elements Questions
-                {
-                    question: "How many essential elements are in the SkillsUSA Framework?",
-                    options: ["12", "15", "17", "20"],
-                    correct: 2,
-                    category: "17 Essential Elements"
-                },
-                {
-                    question: "Which is one of the Personal Skills in the SkillsUSA Framework?",
-                    options: ["Computer Skills", "Self-Motivation", "Planning", "Job-Specific Skills"],
-                    correct: 1,
-                    category: "17 Essential Elements"
-                },
-                {
-                    question: "Integrity is part of which Framework category?",
-                    options: ["Personal Skills", "Workplace Skills", "Technical Skills Grounded in Academics", "Leadership Skills"],
-                    correct: 0,
-                    category: "17 Essential Elements"
-                },
-                {
-                    question: "Which of these is a Workplace Skills element?",
-                    options: ["Self-Esteem", "Teamwork", "Decision-Making", "Responsibility"],
-                    correct: 1,
-                    category: "17 Essential Elements"
-                },
-                {
-                    question: "Communication is part of which Framework category?",
-                    options: ["Personal Skills", "Workplace Skills", "Technical Skills Grounded in Academics", "Social Skills"],
-                    correct: 1,
-                    category: "17 Essential Elements"
-                },
-                {
-                    question: "Which is NOT one of the Personal Skills?",
-                    options: ["Self-Esteem", "Self-Motivation", "Time Management", "Goal-Setting"],
-                    correct: 2,
-                    category: "17 Essential Elements"
-                },
-                {
-                    question: "Computer Skills fall under which Framework category?",
-                    options: ["Personal Skills", "Workplace Skills", "Technical Skills Grounded in Academics", "Digital Skills"],
-                    correct: 2,
-                    category: "17 Essential Elements"
-                },
-                {
-                    question: "Which is one of the Personal Skills elements?",
-                    options: ["Ethics", "Planning", "Responsibility", "Communication"],
-                    correct: 0,
-                    category: "17 Essential Elements"
-                },
-                {
-                    question: "Problem-Solving and Critical Thinking is part of which category?",
-                    options: ["Personal Skills", "Workplace Skills", "Technical Skills Grounded in Academics", "Cognitive Skills"],
-                    correct: 1,
-                    category: "17 Essential Elements"
-                },
-                {
-                    question: "Which element focuses on understanding workplace culture?",
-                    options: ["Professionalism", "Economics", "Teamwork", "Communication"],
-                    correct: 1,
-                    category: "17 Essential Elements"
-                },
-                {
-                    question: "Safety, Health and Environmental skills are part of which category?",
-                    options: ["Personal Skills", "Workplace Skills", "Technical Skills Grounded in Academics", "Protective Skills"],
-                    correct: 2,
-                    category: "17 Essential Elements"
-                },
-                {
-                    question: "How many Personal Skills are in the Framework?",
-                    options: ["4", "5", "6", "7"],
-                    correct: 2,
-                    category: "17 Essential Elements"
-                },
-                {
-                    question: "Leadership is part of which Framework category?",
-                    options: ["Personal Skills", "Workplace Skills", "Technical Skills Grounded in Academics", "Management Skills"],
-                    correct: 1,
-                    category: "17 Essential Elements"
-                },
-                {
-                    question: "Which element involves understanding business principles?",
-                    options: ["Economics", "Management", "Career Planning", "Professionalism"],
-                    correct: 0,
-                    category: "17 Essential Elements"
-                },
-                {
-                    question: "Job-Specific Skills fall under which category?",
-                    options: ["Personal Skills", "Workplace Skills", "Technical Skills Grounded in Academics", "Career Skills"],
-                    correct: 2,
-                    category: "17 Essential Elements"
-                },
-                {
-                    question: "Which Personal Skill involves taking ownership of your actions?",
-                    options: ["Integrity", "Responsibility", "Self-Motivation", "Ethics"],
-                    correct: 1,
-                    category: "17 Essential Elements"
-                },
-                {
-                    question: "How many Workplace Skills are in the Framework?",
-                    options: ["5", "6", "7", "8"],
-                    correct: 1,
-                    category: "17 Essential Elements"
-                },
-                {
-                    question: "Which skill involves reading technical manuals and documents?",
-                    options: ["Communication", "Computer Skills", "Technical Reading", "Job-Specific Skills"],
-                    correct: 2,
-                    category: "17 Essential Elements"
-                },
-                {
-                    question: "Career Planning is part of which category?",
-                    options: ["Personal Skills", "Workplace Skills", "Technical Skills Grounded in Academics", "Future Skills"],
-                    correct: 1,
-                    category: "17 Essential Elements"
-                },
-                {
-                    question: "Which element focuses on building positive self-image?",
-                    options: ["Self-Esteem", "Self-Motivation", "Integrity", "Responsibility"],
-                    correct: 0,
-                    category: "17 Essential Elements"
-                },
+            // GitHub repository configuration
+            // CHANGE THESE to match your repository!
+            const GITHUB_USER = 'YOUR-GITHUB-USERNAME';  // Replace with your GitHub username
+            const GITHUB_REPO = 'skillsusa-trivia';       // Replace with your repo name
+            const GITHUB_BRANCH = 'main';                 // Usually 'main' or 'master'
+            
+            const QUESTIONS_URL = `https://raw.githubusercontent.com/${GITHUB_USER}/${GITHUB_REPO}/${GITHUB_BRANCH}/questions.json`;
+            const LEADERBOARD_URL = `https://raw.githubusercontent.com/${GITHUB_USER}/${GITHUB_REPO}/${GITHUB_BRANCH}/leaderboard.json`;
 
-                // Program of Work Questions
-                {
-                    question: "What does POW stand for in SkillsUSA?",
-                    options: ["Program of Work", "Plan of Work", "Professional Organization Work", "Project Outline Work"],
-                    correct: 0,
-                    category: "Program of Work (POW)"
-                },
-                {
-                    question: "How many Program of Work (POW) areas are there?",
-                    options: ["4", "6", "8", "10"],
-                    correct: 1,
-                    category: "Program of Work (POW)"
-                },
-                {
-                    question: "Which is one of the six POW areas?",
-                    options: ["Competition", "Community Service", "Fundraising", "Recruitment"],
-                    correct: 1,
-                    category: "Program of Work (POW)"
-                },
-                {
-                    question: "Professional Development is one of the POW areas. What does it focus on?",
-                    options: ["Winning contests", "Building career-ready skills", "Raising money", "Social media"],
-                    correct: 1,
-                    category: "Program of Work (POW)"
-                },
-                {
-                    question: "Which POW area involves representing SkillsUSA to others?",
-                    options: ["Community Service", "Public Relations", "Social Activities", "Professional Development"],
-                    correct: 1,
-                    category: "Program of Work (POW)"
-                },
-                {
-                    question: "The Ways and Means POW area focuses on:",
-                    options: ["Leadership training", "Fundraising and financial planning", "Community projects", "Competition preparation"],
-                    correct: 1,
-                    category: "Program of Work (POW)"
-                },
-                {
-                    question: "Which POW area emphasizes giving back to the community?",
-                    options: ["Professional Development", "Community Service", "Ways and Means", "Employment"],
-                    correct: 1,
-                    category: "Program of Work (POW)"
-                },
-                {
-                    question: "Social Activities is a POW area that focuses on:",
-                    options: ["Building chapter unity and teamwork", "Online presence", "Job shadowing", "Competition prep"],
-                    correct: 0,
-                    category: "Program of Work (POW)"
-                },
-                {
-                    question: "Which POW area helps students prepare for careers?",
-                    options: ["Ways and Means", "Social Activities", "Employment", "Public Relations"],
-                    correct: 2,
-                    category: "Program of Work (POW)"
-                },
-                {
-                    question: "A chapter's POW should be developed:",
-                    options: ["By the advisor only", "By officers and members together", "By national headquarters", "By the school principal"],
-                    correct: 1,
-                    category: "Program of Work (POW)"
-                },
-                {
-                    question: "Which statement about POW is true?",
-                    options: ["It's optional for chapters", "It should include all six areas", "Only state officers need it", "It focuses only on competitions"],
-                    correct: 1,
-                    category: "Program of Work (POW)"
-                },
-                {
-                    question: "The POW should be evaluated:",
-                    options: ["Never", "Only at nationals", "Throughout the year", "Every five years"],
-                    correct: 2,
-                    category: "Program of Work (POW)"
-                },
+            // Load questions on mount
+            useEffect(() => {
+                loadQuestions();
+            }, []);
 
-                // Interviewing Practices Questions
-                {
-                    question: "How early should you arrive for an interview?",
-                    options: ["Right on time", "5-10 minutes early", "15-20 minutes early", "30 minutes early"],
-                    correct: 1,
-                    category: "Interviewing"
-                },
-                {
-                    question: "What type of handshake is best for interviews?",
-                    options: ["Weak and brief", "Firm and confident", "Aggressive grip", "Two-handed shake"],
-                    correct: 1,
-                    category: "Interviewing"
-                },
-                {
-                    question: "How should you dress for a professional interview?",
-                    options: ["Casual comfortable clothes", "Business professional attire", "Whatever you wear daily", "Formal evening wear"],
-                    correct: 1,
-                    category: "Interviewing"
-                },
-                {
-                    question: "What should you bring to an interview?",
-                    options: ["Nothing", "Only your phone", "Copies of resume, pen, notepad", "Your lunch"],
-                    correct: 2,
-                    category: "Interviewing"
-                },
-                {
-                    question: "What does the STAR method stand for in interview responses?",
-                    options: ["Skill, Task, Action, Result", "Situation, Task, Action, Result", "Start, Talk, Answer, Respond", "Story, Talent, Answer, Resolve"],
-                    correct: 1,
-                    category: "Interviewing"
-                },
-                {
-                    question: "When should you send a thank-you note after an interview?",
-                    options: ["Within 24 hours", "After one week", "Only if you get the job", "Never necessary"],
-                    correct: 0,
-                    category: "Interviewing"
-                },
-                {
-                    question: "What is appropriate body language during an interview?",
-                    options: ["Crossed arms", "Slouching", "Sit up straight, lean slightly forward", "Fidgeting constantly"],
-                    correct: 2,
-                    category: "Interviewing"
-                },
-
-                // SkillsUSA History and Facts
-                {
-                    question: "What year was SkillsUSA founded?",
-                    options: ["1965", "1972", "1985", "1990"],
-                    correct: 0,
-                    category: "SkillsUSA Facts"
-                },
-                {
-                    question: "What was SkillsUSA originally called?",
-                    options: ["Vocational Industrial Clubs of America (VICA)", "Trade Skills Association", "Career Technical Student Organization", "American Vocational League"],
-                    correct: 0,
-                    category: "SkillsUSA Facts"
-                },
-                {
-                    question: "What are the official SkillsUSA colors?",
-                    options: ["Blue and Gold", "Red, White, and Blue", "Red and Gold", "Blue and Silver"],
-                    correct: 1,
-                    category: "SkillsUSA Facts"
-                },
-                {
-                    question: "What does the color red represent in SkillsUSA?",
-                    options: ["Technology", "The individual", "Passion", "National organization"],
-                    correct: 1,
-                    category: "SkillsUSA Facts"
-                },
-                {
-                    question: "What does the color white represent in SkillsUSA?",
-                    options: ["Technology", "The individual", "Purity", "Employers"],
-                    correct: 0,
-                    category: "SkillsUSA Facts"
-                },
-                {
-                    question: "What does the color blue represent in SkillsUSA?",
-                    options: ["The sky", "Technology", "The ocean", "The individual"],
-                    correct: 1,
-                    category: "SkillsUSA Facts"
-                },
-                {
-                    question: "What is the SkillsUSA motto?",
-                    options: ["Excellence in Action", "Champions at Work", "Career Ready", "Skills for Success"],
-                    correct: 1,
-                    category: "SkillsUSA Facts"
-                },
-                {
-                    question: "How many career clusters does SkillsUSA serve?",
-                    options: ["8", "12", "16", "20"],
-                    correct: 2,
-                    category: "SkillsUSA Facts"
-                },
-                {
-                    question: "What is the highest level of SkillsUSA competition?",
-                    options: ["State", "National Leadership and Skills Conference (NLSC)", "Regional", "International"],
-                    correct: 1,
-                    category: "SkillsUSA Facts"
-                },
-                {
-                    question: "Where is SkillsUSA headquarters located?",
-                    options: ["Washington D.C.", "Leesburg, Virginia", "New York City", "Atlanta, Georgia"],
-                    correct: 1,
-                    category: "SkillsUSA Facts"
-                },
-                {
-                    question: "What does CTE stand for?",
-                    options: ["Career and Technical Education", "Certified Technology Expert", "Central Training Environment", "Competition Training Events"],
-                    correct: 0,
-                    category: "SkillsUSA Facts"
-                },
-                {
-                    question: "What is the official SkillsUSA uniform?",
-                    options: ["Jeans and t-shirt", "Red blazer, white shirt, black pants/skirt, black shoes", "Casual Friday attire", "Suit and tie only"],
-                    correct: 1,
-                    category: "SkillsUSA Facts"
-                },
-                {
-                    question: "When should the official SkillsUSA attire be worn?",
-                    options: ["Never", "At opening sessions, competitions, and official functions", "Only for photos", "Every day"],
-                    correct: 1,
-                    category: "SkillsUSA Facts"
-                },
-                {
-                    question: "The official SkillsUSA blazer is what color?",
-                    options: ["Blue", "Red", "Black", "White"],
-                    correct: 1,
-                    category: "SkillsUSA Facts"
+            const loadQuestions = async () => {
+                try {
+                    setIsLoadingQuestions(true);
+                    const response = await fetch(QUESTIONS_URL);
+                    if (!response.ok) throw new Error('Failed to load questions');
+                    
+                    const data = await response.json();
+                    // Decode the questions using atob()
+                    const decodedQuestions = JSON.parse(atob(data.data));
+                    setAllQuestions(decodedQuestions);
+                    setTriviaQuestions(getRandomQuestionsFrom(decodedQuestions));
+                    setIsLoadingQuestions(false);
+                } catch (error) {
+                    console.error('Error loading questions:', error);
+                    setLoadError('Failed to load questions. Please check your GitHub repository configuration.');
+                    setIsLoadingQuestions(false);
                 }
-            ];
+            };
 
-            const getRandomQuestions = () => {
-                const shuffled = [...allQuestions].sort(() => Math.random() - 0.5);
+            const getRandomQuestionsFrom = (questions) => {
+                const shuffled = [...questions].sort(() => Math.random() - 0.5);
                 return shuffled.slice(0, 15);
             };
 
-            const [triviaQuestions, setTriviaQuestions] = useState(() => getRandomQuestions());
-
-            useEffect(() => {
-                loadLeaderboard();
-            }, []);
-
-            const loadLeaderboard = () => {
+            const loadLeaderboard = async () => {
                 setIsLoadingLeaderboard(true);
                 try {
-                    const result = storage.list('leaderboard:');
-                    if (result && result.keys) {
-                        const scores = result.keys.map(key => {
-                            const data = storage.get(key);
-                            return data ? JSON.parse(data.value) : null;
-                        }).filter(s => s !== null);
-                        
-                        scores.sort((a, b) => b.score - a.score);
-                        setLeaderboardData(scores.slice(0, 10));
-                    }
+                    const response = await fetch(LEADERBOARD_URL + '?t=' + Date.now()); // Cache bust
+                    if (!response.ok) throw new Error('Failed to load leaderboard');
+                    
+                    const data = await response.json();
+                    const scores = data.scores || [];
+                    scores.sort((a, b) => b.score - a.score);
+                    setLeaderboardData(scores.slice(0, 10));
                 } catch (error) {
-                    console.log('No leaderboard data yet');
+                    console.error('Error loading leaderboard:', error);
                     setLeaderboardData([]);
                 }
                 setIsLoadingLeaderboard(false);
             };
 
-            const saveScore = (name, finalScore) => {
-                try {
-                    const timestamp = Date.now();
-                    const scoreData = {
-                        name: name,
-                        score: finalScore,
-                        total: triviaQuestions.length,
-                        percentage: Math.round((finalScore / triviaQuestions.length) * 100),
-                        date: new Date().toLocaleDateString(),
-                        timestamp: timestamp
-                    };
-                    
-                    storage.set(`leaderboard:${timestamp}`, JSON.stringify(scoreData));
-                    loadLeaderboard();
-                } catch (error) {
-                    console.error('Error saving score:', error);
-                }
+            const saveScore = async (name, finalScore) => {
+                const scoreData = {
+                    name: name,
+                    score: finalScore,
+                    total: triviaQuestions.length,
+                    percentage: Math.round((finalScore / triviaQuestions.length) * 100),
+                    date: new Date().toLocaleDateString(),
+                    timestamp: Date.now()
+                };
+                
+                // Note: This saves to localStorage and displays instructions
+                // Actual GitHub file update requires GitHub API token or manual update
+                const existingScores = JSON.parse(localStorage.getItem('pendingScores') || '[]');
+                existingScores.push(scoreData);
+                localStorage.setItem('pendingScores', JSON.stringify(existingScores));
+                
+                // Show current score immediately
+                const currentLeaderboard = [...leaderboardData, scoreData];
+                currentLeaderboard.sort((a, b) => b.score - a.score);
+                setLeaderboardData(currentLeaderboard.slice(0, 10));
+                
+                // Show instructions for updating GitHub
+                alert(`Score saved locally!\n\nTo update the online leaderboard:\n1. Go to your GitHub repository\n2. Edit leaderboard.json\n3. Add this entry to the "scores" array:\n\n${JSON.stringify(scoreData, null, 2)}\n\n4. Commit the changes`);
             };
 
             const handleAnswerClick = (index) => {
@@ -522,7 +191,7 @@
                 setSelectedAnswer(null);
                 setGameOver(false);
                 setAnsweredCorrectly(false);
-                setTriviaQuestions(getRandomQuestions());
+                setTriviaQuestions(getRandomQuestionsFrom(allQuestions));
                 setShowNameInput(false);
                 setShowLeaderboard(false);
                 loadLeaderboard();
@@ -537,6 +206,33 @@
                 return "Keep studying! There's more to learn about SkillsUSA! 💪";
             };
 
+            // Loading state
+            if (isLoadingQuestions) {
+                return (
+                    <div className="min-h-screen bg-gradient-to-br from-blue-600 via-red-600 to-blue-700 flex items-center justify-center p-4">
+                        <div className="bg-white rounded-2xl shadow-2xl p-8 max-w-md w-full text-center">
+                            <Trophy className="w-20 h-20 mx-auto text-yellow-500 mb-4 animate-pulse" />
+                            <h2 className="text-2xl font-bold text-gray-800 mb-2">Loading Questions...</h2>
+                            <p className="text-gray-600">Please wait while we fetch the trivia questions.</p>
+                        </div>
+                    </div>
+                );
+            }
+
+            // Error state
+            if (loadError) {
+                return (
+                    <div className="min-h-screen bg-gradient-to-br from-blue-600 via-red-600 to-blue-700 flex items-center justify-center p-4">
+                        <div className="bg-white rounded-2xl shadow-2xl p-8 max-w-md w-full text-center">
+                            <XCircle className="w-20 h-20 mx-auto text-red-500 mb-4" />
+                            <h2 className="text-2xl font-bold text-gray-800 mb-2">Error Loading Questions</h2>
+                            <p className="text-gray-600 mb-4">{loadError}</p>
+                            <p className="text-sm text-gray-500">Make sure to update the GitHub configuration in the HTML file with your username and repository name.</p>
+                        </div>
+                    </div>
+                );
+            }
+
             if (gameOver) {
                 const categoryStats = {};
                 triviaQuestions.forEach((q) => {
@@ -547,6 +243,10 @@
                 });
 
                 if (showLeaderboard) {
+                    useEffect(() => {
+                        loadLeaderboard();
+                    }, [showLeaderboard]);
+
                     return (
                         <div className="min-h-screen bg-gradient-to-br from-blue-600 via-red-600 to-blue-700 flex items-center justify-center p-4">
                             <div className="bg-white rounded-2xl shadow-2xl p-8 max-w-2xl w-full">
@@ -695,7 +395,7 @@
                                     onClick={() => setShowNameInput(true)}
                                     className="w-full bg-gradient-to-r from-blue-600 to-red-600 text-white px-8 py-4 rounded-lg text-xl font-semibold hover:shadow-lg transform hover:scale-105 transition-all"
                                 >
-                                    Save to Leaderboard
+                                    Save Score
                                 </button>
                                 <button
                                     onClick={() => setShowLeaderboard(true)}
