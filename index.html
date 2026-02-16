@@ -74,13 +74,12 @@
             const [isLoadingQuestions, setIsLoadingQuestions] = useState(true);
             const [loadError, setLoadError] = useState(null);
 
-            // GitHub repository configuration
-            // CHANGE THESE to match your repository!
-            const GITHUB_USER = 'YOUR-GITHUB-USERNAME';  // Replace with your GitHub username
-            const GITHUB_REPO = 'skillsusa-trivia';       // Replace with your repo name
-            const GITHUB_BRANCH = 'main';                 // Usually 'main' or 'master'
+            // GitHub repository configuration - CORRECTED!
+            const GITHUB_USER = 'gungrave88th-cmd';
+            const GITHUB_REPO = 'skillsusa-trivia';
+            const GITHUB_BRANCH = 'main';
             
-            const QUESTIONS_URL = `https://raw.githubusercontent.com/${gungrave88th-cmd}/${GITHUB_REPO}/${GITHUB_BRANCH}/questions.json`;
+            const QUESTIONS_URL = `https://raw.githubusercontent.com/${GITHUB_USER}/${GITHUB_REPO}/${GITHUB_BRANCH}/questions.json`;
 
             // Load questions on mount
             useEffect(() => {
@@ -176,7 +175,7 @@
                             <XCircle className="w-20 h-20 mx-auto text-red-500 mb-4" />
                             <h2 className="text-2xl font-bold text-gray-800 mb-2">Error Loading Questions</h2>
                             <p className="text-gray-600 mb-4">{loadError}</p>
-                            <p className="text-sm text-gray-500">Make sure to update the GitHub configuration in the HTML file with your username and repository name.</p>
+                            <p className="text-sm text-gray-500">Make sure questions.json is in your repository.</p>
                         </div>
                     </div>
                 );
