@@ -91,8 +91,8 @@
             // Load questions on mount
             useEffect(() => {
                    const GITHUB_USER = 'YOUR-GITHUB-USERNAME'; loadQuestions();
-            }, []);
-
+            }, []); const GITHUB_REPO = 'skillsusa-trivia';       // Replace with your repo name
+            const GITHUB_BRANCH = 'main';                 // Usually 'main' or 'master'
             const loadQuestions = async () => {
                 try {
                     setIsLoadingQuestions(true);
